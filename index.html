@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- iOS web app -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Budget" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+
+  <title>Günlük Bütçe</title>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --good: #2fe4ab;
+      --bad: #ff5b7a;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 26px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html, body{ height:100%; }
+    html{
+      background:#070a14;
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+      overscroll-behavior-y:none;
+    }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      padding: calc(16px + env(safe-area-inset-top)) 14px calc(22px + env(safe-area-inset-bottom));
+      -webkit-tap-highlight-color:transparent;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:0; z-index:-1;
+      background:
+        radial-gradient(1200px 800px at 15% 10%, rgba(124,92,255,.35), transparent 55%),
+        radial-gradient(1100px 700px at 85% 25%, rgba(49,213,255,.24), transparent 60%),
+        radial-gradient(900px 700px at 50% 95%, rgba(47,228,171,.15), transparent 55%),
+        linear-gradient(180deg, #070a14, var(--bg));
+    }
+
+    *{ box-sizing:border-box; }
+
+    .app{ max-width:520px; margin:0 auto; display:grid; gap:14px; }
+
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:16px 16px;
+      border-radius:var(--radius2);
+      background:linear-gradient(135deg, rgba(124,92,255,.18), rgba(49,213,255,.10));
+      border:1px solid var(--stroke);
+      box-shadow:var(--shadow);
+    }
+    .title h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+
+    .rightHead{ display:flex; gap:10px; align-items:center; }
+
+    .chip{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      color:rgba(255,255,255,.85);
+      white-space:nowrap;
+    }
+
+    .iconbtn{
+      width:44px; height:40px;
+      display:flex; align-items:center; justify-content:center;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.07);
+      box-shadow:none;
+      font-weight:900;
+      padding:0;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .card{
+      border-radius:var(--radius2);
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--stroke);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .inner{ padding:14px; }
+
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+
+    input, select, button{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:12px 12px;
+      outline:none;
+      font-size:14px;
+      min-width:0;
+    }
+
+    button{
+      cursor:pointer;
+      background:linear-gradient(135deg, rgba(124,92,255,.95), rgba(49,213,255,.75));
+      border:0;
+      font-weight:750;
+      letter-spacing:.2px;
+      box-shadow:0 10px 25px rgba(124,92,255,.25);
+    }
+    button.secondary{
+      background:rgba(255,255,255,.07);
+      border:1px solid var(--stroke);
+      box-shadow:none;
+      font-weight:650;
+    }
+    button.danger{
+      background:rgba(255,91,122,.12);
+      border:1px solid rgba(255,91,122,.35);
+      box-shadow:none;
+      font-weight:780;
+    }
+
+    .divider{ height:1px; background:rgba(255,255,255,.08); margin:12px 0; }
+    .row{ display:flex; gap:10px; align-items:center; }
+    .row > *{ flex:1; }
+
+    .metrics{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .metric{
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--stroke);
+      border-radius:var(--radius);
+      padding:12px;
+      min-width:0;
+    }
+    .metric .k{ font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .metric .v{ font-family:var(--mono); font-size:18px; font-weight:850; }
+    .metric .sub{ margin-top:6px; font-size:12px; color:var(--muted); }
+    .good{ color:var(--good); } .bad{ color:var(--bad); }
+
+    .list{
+      display:grid;
+      gap:10px;
+      max-height:340px;
+      overflow:auto;
+      padding-right:2px;
+    }
+    .day{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px;
+      border-radius:var(--radius);
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      min-width:0;
+    }
+    .day.selected{
+      background:linear-gradient(135deg, rgba(124,92,255,.18), rgba(49,213,255,.08));
+      border-color:rgba(124,92,255,.35);
+    }
+    .day .left{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+    .day .d1{ font-weight:850; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .day .d2{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:var(--mono); }
+
+    .pill{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    .small{ font-size:12px; color:var(--muted); }
+
+    dialog{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:18px;
+      background:rgba(11,16,32,.92);
+      color:var(--text);
+      padding:0;
+      width:min(520px, calc(100vw - 24px));
+      box-shadow:var(--shadow);
+    }
+    dialog::backdrop{ background:rgba(0,0,0,.55); backdrop-filter:blur(4px); }
+
+    .dlgHead{
+      padding:14px 14px 10px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .dlgHead .t{ font-weight:900; letter-spacing:.2px; }
+
+    .dlgBody{ padding:12px 14px 14px; display:grid; gap:10px; }
+
+    .xbtn{
+      width:40px; height:40px;
+      border-radius:12px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:none;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .monthCenter{
+      display:grid;
+      justify-items:center;
+      gap:10px;
+      padding:4px 0 2px;
+    }
+    .monthCenter .monthField{
+      width:100%;
+      max-width:280px;
+    }
+    .monthCenter .monthBtn{
+      width:100%;
+      max-width:220px;
+    }
+
+    .txWrap{ margin-top:10px; display:grid; gap:10px; }
+    .txList{ display:grid; gap:8px; max-height:180px; overflow:auto; padding-right:2px; }
+    .tx{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 10px;
+      border-radius:14px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      min-width:0;
+    }
+    .tx .l{ min-width:0; display:flex; flex-direction:column; gap:3px; }
+    .tx .t{
+      font-family:var(--mono);
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .tx .a{ font-family:var(--mono); font-weight:900; font-size:13px; }
+    .tx .del{
+      width:40px; height:36px; padding:0;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      box-shadow:none;
+      cursor:pointer;
+      font-weight:900;
+      flex:0 0 auto;
+    }
+
+    @media (max-width:520px){
+      .row{ flex-direction:column; }
+      .row > *{ width:100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <h1>Günlük Bütçe</h1>
+      </div>
+      <div class="rightHead">
+        <div class="chip" id="chipMonth">—</div>
+        <button class="iconbtn" id="btnSettings" title="Ayarlar">⚙</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="inner">
+        <div>
+          <label>Aylık bütçe (₺)</label>
+          <input id="monthlyBudget" type="number" min="0" step="1" inputmode="numeric" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="k">Gün sayısı</div>
+            <div class="v" id="daysInMonth">—</div>
+            <div class="sub">Seçili ayın gün adedi</div>
+          </div>
+          <div class="metric">
+            <div class="k">Günlük baz bütçe</div>
+            <div class="v" id="dailyBase">—</div>
+            <div class="sub">Aylık / gün sayısı</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px; justify-content:center" class="row">
+          <button id="btnInit" style="max-width:260px;">Ayı başlat / güncelle</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="inner">
+        <div>
+          <label>Seçili gün</label>
+          <select id="daySelect"></select>
+        </div>
+
+        <div style="margin-top:10px">
+          <label>Harcama tutarı (₺)</label>
+          <input id="amountInput" type="number" min="0" step="1" inputmode="numeric" />
+        </div>
+
+        <div style="margin-top:10px" class="row">
+          <button id="btnAdd">Harcama ekle</button>
+          <button id="btnClearDay" class="secondary">Günü temizle</button>
+        </div>
+
+        <div class="txWrap">
+          <div class="metric">
+            <div class="k">Seçili gün işlemleri</div>
+            <div style="margin-top:10px" class="txList" id="txList"></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="k">Gün bütçesi</div>
+            <div class="v" id="dayBudget">—</div>
+            <div class="sub">Baz + devreden</div>
+          </div>
+          <div class="metric">
+            <div class="k">Gün toplam harcama</div>
+            <div class="v" id="daySpend">—</div>
+            <div class="sub">İşlemlerin toplamı</div>
+          </div>
+          <div class="metric">
+            <div class="k">Gün sonu bakiye</div>
+            <div class="v" id="dayRemainder">—</div>
+            <div class="sub">Ertesi güne devreder</div>
+          </div>
+          <div class="metric">
+            <div class="k">Ay özeti</div>
+            <div class="v" id="monthSummary">—</div>
+            <div class="sub" id="monthSummarySub">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="inner">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="font-weight:900; letter-spacing:.2px;">Günler</div>
+          <div class="pill">Devreden: Aktif</div>
+        </div>
+        <div style="margin-top:12px" class="list" id="daysList"></div>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="dlgSettings">
+    <div class="dlgHead">
+      <div class="t">Ayarlar</div>
+      <button class="xbtn" id="btnCloseDlg" aria-label="Kapat">✕</button>
+    </div>
+    <div class="dlgBody">
+      <div class="monthCenter">
+        <div class="monthField">
+          <label>Ay seç</label>
+          <input id="monthInput" type="month" />
+        </div>
+        <button id="btnApplyMonth" class="monthBtn">Ayı Uygula</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <button id="btnExport" class="secondary">Yedekle (JSON)</button>
+      <button id="btnImport" class="secondary">İçe al (JSON)</button>
+
+      <div class="divider"></div>
+
+      <div class="small">Bu ayın tüm verilerini siler. Geri alınamaz.</div>
+      <button id="btnReset" class="danger">Bu ayı sıfırla</button>
+    </div>
+  </dialog>
+
+<script>
+(() => {
+  const fmt = (n) => {
+    if (n === null || n === undefined || Number.isNaN(n)) return "—";
+    const v = Math.round(Number(n));
+    return new Intl.NumberFormat("tr-TR").format(v) + " ₺";
+  };
+  const clampInt = (n, min=0) => Math.max(min, Math.round(Number(n || 0)));
+  const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const timeHHMM = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const daysInMonth = (year, monthIndex0) => new Date(year, monthIndex0+1, 0).getDate();
+
+  // ---------- Keys ----------
+  const monthKey = (yyyyMM) => `dailyBudgetApp:v4:${yyyyMM}`;
+  const metaKey = (name) => `dailyBudgetApp:meta:${name}`;
+
+  // ---------- Storage (IndexedDB + localStorage + cookie fallback) ----------
+  const DB_NAME = "dailyBudgetDB";
+  const DB_VERSION = 1;
+  const STORE_NAME = "kv";
+
+  function openDB(){
+    return new Promise((resolve, reject) => {
+      if (!("indexedDB" in window)) return reject(new Error("indexedDB unsupported"));
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)){
+          db.createObjectStore(STORE_NAME, { keyPath: "key" });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error("db open error"));
+    });
+  }
+
+  async function idbSet(key, value){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onerror = () => { db.close(); reject(tx.error || new Error("tx error")); };
+      tx.objectStore(STORE_NAME).put({ key, value, ts: Date.now() });
+    });
+  }
+
+  async function idbGet(key){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      tx.oncomplete = () => db.close();
+      tx.onerror = () => { db.close(); reject(tx.error || new Error("tx error")); };
+      const req = tx.objectStore(STORE_NAME).get(key);
+      req.onsuccess = () => resolve(req.result ? req.result.value : null);
+      req.onerror = () => reject(req.error || new Error("get error"));
+    });
+  }
+
+  async function idbDel(key){
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onerror = () => { db.close(); reject(tx.error || new Error("tx error")); };
+      tx.objectStore(STORE_NAME).delete(key);
+    });
+  }
+
+  function cookieSet(key, val){
+    document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(val)}; path=/; max-age=31536000; samesite=lax`;
+  }
+  function cookieGet(key){
+    const k = encodeURIComponent(key) + "=";
+    const parts = document.cookie.split(";").map(s => s.trim());
+    for (const p of parts){
+      if (p.startsWith(k)) return decodeURIComponent(p.slice(k.length));
+    }
+    return null;
+  }
+  function cookieDel(key){
+    document.cookie = `${encodeURIComponent(key)}=; path=/; max-age=0; samesite=lax`;
+  }
+
+  async function saveKV(key, value){
+    try { await idbSet(key, value); return true; } catch {}
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch {}
+    try { cookieSet(key, JSON.stringify(value)); return true; } catch {}
+    return false;
+  }
+
+  async function loadKV(key){
+    try {
+      const v = await idbGet(key);
+      if (v !== null && v !== undefined) return v;
+    } catch {}
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    try {
+      const raw = cookieGet(key);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  }
+
+  async function delKV(key){
+    try { await idbDel(key); } catch {}
+    try { localStorage.removeItem(key); } catch {}
+    try { cookieDel(key); } catch {}
+  }
+
+  async function requestPersistentStorage(){
+    try {
+      if (navigator.storage?.persist) await navigator.storage.persist();
+    } catch {}
+  }
+
+  // ---------- App State ----------
+  let state = { yyyyMM: "", monthlyBudget: 0, dailyBase: 0, days: [] };
+
+  // ---------- Elements ----------
+  const elMonth = document.getElementById('monthInput');
+  const elBudget = document.getElementById('monthlyBudget');
+  const elDaysInMonth = document.getElementById('daysInMonth');
+  const elDailyBase = document.getElementById('dailyBase');
+  const elChipMonth = document.getElementById('chipMonth');
+
+  const elInit = document.getElementById('btnInit');
+
+  const elDaySelect = document.getElementById('daySelect');
+  const elAmount = document.getElementById('amountInput');
+  const elAdd = document.getElementById('btnAdd');
+  const elClearDay = document.getElementById('btnClearDay');
+
+  const elDayBudget = document.getElementById('dayBudget');
+  const elDaySpend = document.getElementById('daySpend');
+  const elDayRemainder = document.getElementById('dayRemainder');
+
+  const elDaysList = document.getElementById('daysList');
+  const elTxList = document.getElementById('txList');
+
+  const elMonthSummary = document.getElementById('monthSummary');
+  const elMonthSummarySub = document.getElementById('monthSummarySub');
+
+  const elExport = document.getElementById('btnExport');
+  const elImport = document.getElementById('btnImport');
+
+  const dlg = document.getElementById('dlgSettings');
+  const btnSettings = document.getElementById('btnSettings');
+  const btnCloseDlg = document.getElementById('btnCloseDlg');
+  const elReset = document.getElementById('btnReset');
+  const elApplyMonth = document.getElementById('btnApplyMonth');
+
+  const now = new Date();
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  // ---------- Helpers ----------
+  function getMonthLabel(yyyyMM){
+    if (!yyyyMM) return "—";
+    const [y, m] = yyyyMM.split('-').map(Number);
+    const monthNames = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+    return `${monthNames[m-1]} ${y}`;
+  }
+
+  // ---- NEW: current month + today index helpers + force-today flag ----
+  function isCurrentMonth(yyyyMM){
+    const n = new Date();
+    const cur = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+    return yyyyMM === cur;
+  }
+  function todayIdx0(){
+    return new Date().getDate() - 1; // 0-based
+  }
+  let forceTodayOnNextRender = false;
+  function requestSelectTodayIfCurrentMonth(){
+    if (!state?.yyyyMM) return;
+    if (!state.days?.length) return;
+    if (!isCurrentMonth(state.yyyyMM)) return;
+    forceTodayOnNextRender = true;
+    render();
+  }
+
+  async function saveLastMonth(yyyyMM){
+    if (!yyyyMM) return;
+    await saveKV(metaKey("lastMonth"), yyyyMM);
+  }
+
+  async function getLastMonth(){
+    const v = await loadKV(metaKey("lastMonth"));
+    return (typeof v === "string" && /^\d{4}-\d{2}$/.test(v)) ? v : null;
+  }
+
+  async function saveCurrentMonthState(){
+    if (!state.yyyyMM || !state.days?.length) return;
+    await saveKV(monthKey(state.yyyyMM), state);
+    await saveLastMonth(state.yyyyMM);
+  }
+
+  async function loadMonthState(yyyyMM){
+    const obj = await loadKV(monthKey(yyyyMM));
+    if (!obj) return null;
+    if (!Array.isArray(obj.days)) return null;
+    obj.days.forEach(d => { if (!Array.isArray(d.entries)) d.entries = []; });
+    return obj;
+  }
+
+  function resetVisualsForEmptyMonth(){
+    elDaysInMonth.textContent = "—";
+    elDailyBase.textContent = "—";
+    elDayBudget.textContent = "—";
+    elDaySpend.textContent = "—";
+    elDayRemainder.textContent = "—";
+    elDayRemainder.className = "v";
+    elMonthSummary.textContent = "—";
+    elMonthSummarySub.textContent = "—";
+    elDaySelect.innerHTML = "";
+    elDaysList.innerHTML = "";
+    elTxList.innerHTML = "";
+  }
+
+  function daySpendSum(day){
+    const entries = Array.isArray(day.entries) ? day.entries : [];
+    return entries.reduce((a,e) => a + (e?.amount ? Number(e.amount) : 0), 0);
+  }
+
+  function recalc(){
+    if (!state.yyyyMM || !state.days.length){
+      render();
+      return;
+    }
+
+    const [y, m] = state.yyyyMM.split('-').map(Number);
+    const dim = daysInMonth(y, m-1);
+    elDaysInMonth.textContent = String(dim);
+
+    state.monthlyBudget = clampInt(state.monthlyBudget, 0);
+    state.dailyBase = dim > 0 ? (state.monthlyBudget / dim) : 0;
+
+    let carry = 0;
+    for (let i=0; i<state.days.length; i++){
+      const d = state.days[i];
+      const spend = daySpendSum(d);
+      const dayBudget = state.dailyBase + carry;
+      const remainder = dayBudget - spend;
+
+      d.budget = dayBudget;
+      d.spend = spend;
+      d.remainder = remainder;
+      carry = remainder;
+    }
+
+    render();
+    saveCurrentMonthState(); // async fire-and-forget
+  }
+
+  function render(){
+    // header chip + month input sync
+    elChipMonth.textContent = getMonthLabel(state.yyyyMM || defaultMonth);
+    elMonth.value = state.yyyyMM || defaultMonth;
+
+    // no month initialized yet
+    if (!state.yyyyMM || !state.days.length){
+      resetVisualsForEmptyMonth();
+      return;
+    }
+
+    // keep user selection normally; but if app just opened and this is current month => jump to today ONCE
+    let keepIdx = Number(elDaySelect.value || 0);
+    if (forceTodayOnNextRender && isCurrentMonth(state.yyyyMM)){
+      keepIdx = Math.max(0, Math.min(todayIdx0(), state.days.length - 1));
+    }
+
+    elDaysInMonth.textContent = String(state.days.length);
+    elDailyBase.textContent = fmt(state.dailyBase);
+
+    // day select
+    elDaySelect.innerHTML = "";
+    state.days.forEach((d, idx) => {
+      const opt = document.createElement('option');
+      opt.value = String(idx);
+      opt.textContent = `${d.day}. gün`;
+      elDaySelect.appendChild(opt);
+    });
+
+    const fixedIdx = Math.max(0, Math.min(keepIdx, state.days.length - 1));
+    elDaySelect.value = String(fixedIdx);
+
+    // after applying once, reset flag
+    forceTodayOnNextRender = false;
+
+    const selectedIdx = fixedIdx;
+
+    // days list
+    elDaysList.innerHTML = "";
+    state.days.forEach((d, idx) => {
+      const row = document.createElement('div');
+      row.className = "day" + (idx === selectedIdx ? " selected" : "");
+
+      const left = document.createElement('div');
+      left.className = "left";
+
+      const t1 = document.createElement('div');
+      t1.className = "d1";
+      t1.textContent = `${d.day}. Gün`;
+
+      const t2 = document.createElement('div');
+      t2.className = "d2";
+      t2.textContent = `Bütçe: ${fmt(d.budget)} • Toplam: ${fmt(d.spend || 0)}`;
+
+      left.appendChild(t1);
+      left.appendChild(t2);
+
+      const pill = document.createElement('div');
+      pill.className = "pill";
+      const rem = d.remainder ?? 0;
+      pill.textContent = (rem >= 0 ? "+" : "") + fmt(rem).replace(" ₺","₺");
+      pill.style.color = rem >= 0 ? "var(--good)" : "var(--bad)";
+      pill.style.borderColor = rem >= 0 ? "rgba(47,228,171,.35)" : "rgba(255,91,122,.35)";
+      pill.style.background = rem >= 0 ? "rgba(47,228,171,.08)" : "rgba(255,91,122,.08)";
+
+      row.appendChild(left);
+      row.appendChild(pill);
+
+      row.addEventListener('click', () => {
+        elDaySelect.value = String(idx);
+        updateSelectedDayUI();
+        render();
+      });
+
+      elDaysList.appendChild(row);
+    });
+
+    updateSelectedDayUI();
+    updateMonthSummary();
+  }
+
+  function updateSelectedDayUI(){
+    const idx = Number(elDaySelect.value || 0);
+    const d = state.days[idx];
+    if (!d){
+      elDayBudget.textContent = "—";
+      elDaySpend.textContent = "—";
+      elDayRemainder.textContent = "—";
+      elTxList.innerHTML = "";
+      return;
+    }
+
+    elDayBudget.textContent = fmt(d.budget);
+    elDaySpend.textContent = fmt(d.spend || 0);
+
+    const rem = d.remainder ?? 0;
+    elDayRemainder.textContent = (rem >= 0 ? "+" : "") + fmt(rem);
+    elDayRemainder.className = "v " + (rem >= 0 ? "good" : "bad");
+
+    const entries = Array.isArray(d.entries) ? d.entries : [];
+    elTxList.innerHTML = "";
+
+    if (entries.length === 0){
+      const empty = document.createElement('div');
+      empty.className = "small";
+      empty.textContent = "Henüz işlem yok.";
+      elTxList.appendChild(empty);
+      return;
+    }
+
+    entries
+      .slice()
+      .sort((a,b) => (a?.ts||0) - (b?.ts||0))
+      .forEach((e) => {
+        const row = document.createElement('div');
+        row.className = "tx";
+
+        const l = document.createElement('div');
+        l.className = "l";
+
+        const t = document.createElement('div');
+        t.className = "t";
+        const dt = new Date(e.ts);
+        t.textContent = `${timeHHMM(dt)}`;
+
+        const a = document.createElement('div');
+        a.className = "a";
+        a.textContent = fmt(e.amount);
+
+        l.appendChild(t);
+        l.appendChild(a);
+
+        const del = document.createElement('button');
+        del.className = "del";
+        del.textContent = "🗑";
+        del.title = "Sil";
+        del.addEventListener('click', () => {
+          d.entries = (d.entries || []).filter(x => x.id !== e.id);
+          recalc();
+        });
+
+        row.appendChild(l);
+        row.appendChild(del);
+        elTxList.appendChild(row);
+      });
+  }
+
+  function updateMonthSummary(){
+    if (!state.days.length){
+      elMonthSummary.textContent = "—";
+      elMonthSummarySub.textContent = "—";
+      return;
+    }
+
+    const totalSpend = state.days.reduce((a,d) => a + (d.spend ? Number(d.spend) : 0), 0);
+    const last = state.days[state.days.length-1];
+    const endCarry = last.remainder ?? 0;
+
+    elMonthSummary.textContent = `${fmt(totalSpend)} harcandı`;
+    elMonthSummarySub.textContent = `Ay sonu devreden: ${(endCarry>=0?"+":"")}${fmt(endCarry)} • Baz günlük: ${fmt(state.dailyBase)}`;
+  }
+
+  function buildNewMonthState(yyyyMM, monthlyBudget){
+    const [y, m] = yyyyMM.split('-').map(Number);
+    const dim = daysInMonth(y, m-1);
+    const days = [];
+    for (let dd=1; dd<=dim; dd++){
+      const date = new Date(y, m-1, dd);
+      days.push({ day: dd, date: ymd(date), entries: [], budget: 0, spend: 0, remainder: 0 });
+    }
+    return { yyyyMM, monthlyBudget: clampInt(monthlyBudget, 0), dailyBase: 0, days };
+  }
+
+  async function initMonth(){
+    const yyyyMM = (elMonth.value || state.yyyyMM || defaultMonth);
+    const monthlyBudget = clampInt(elBudget.value, 0);
+
+    if (!yyyyMM){
+      alert("Lütfen ay seç.");
+      return;
+    }
+
+    // Aynı ay varsa mevcut veriyi koru, bütçeyi güncelle
+    if (state.yyyyMM === yyyyMM && state.days.length){
+      state.monthlyBudget = monthlyBudget || state.monthlyBudget || 0;
+      await saveLastMonth(yyyyMM);
+
+      // NEW: app açınca/başlatınca bu ay ise bugüne git
+      if (isCurrentMonth(state.yyyyMM)) forceTodayOnNextRender = true;
+
+      recalc();
+      return;
+    }
+
+    // Önce varsa yükle
+    const existing = await loadMonthState(yyyyMM);
+    if (existing){
+      state = existing;
+      if (monthlyBudget > 0) state.monthlyBudget = monthlyBudget; // kullanıcı yeni bütçe girdiyse güncelle
+      elBudget.value = state.monthlyBudget || 0;
+      await saveLastMonth(yyyyMM);
+
+      // NEW: app açınca/başlatınca bu ay ise bugüne git
+      if (isCurrentMonth(state.yyyyMM)) forceTodayOnNextRender = true;
+
+      recalc();
+      return;
+    }
+
+    // Yoksa yeni ay oluştur
+    state = buildNewMonthState(yyyyMM, monthlyBudget);
+    elBudget.value = state.monthlyBudget || 0;
+    await saveLastMonth(yyyyMM);
+
+    // NEW: bu ay ise bugüne git
+    if (isCurrentMonth(state.yyyyMM)) forceTodayOnNextRender = true;
+
+    recalc();
+  }
+
+  async function applyMonthSelection(){
+    const yyyyMM = elMonth.value;
+    if (!yyyyMM){
+      alert("Ay seç.");
+      return;
+    }
+
+    await saveLastMonth(yyyyMM);
+
+    const existing = await loadMonthState(yyyyMM);
+    if (existing){
+      state = existing;
+      elBudget.value = state.monthlyBudget || 0;
+
+      // NEW: bu ay ise bugüne git
+      if (isCurrentMonth(state.yyyyMM)) forceTodayOnNextRender = true;
+
+      recalc();          // otomatik yükle
+      dlg.close();
+      return;
+    }
+
+    // Bu ayda veri yoksa sadece ayı seç, kullanıcı bütçeyi girip başlatır
+    state = { yyyyMM, monthlyBudget: 0, dailyBase: 0, days: [] };
+    elBudget.value = "";
+    render();
+    dlg.close();
+  }
+
+  function addEntry(){
+    if (!state.days.length){
+      alert("Önce ayı başlat.");
+      return;
+    }
+
+    const idx = Number(elDaySelect.value || 0);
+    const d = state.days[idx];
+    if (!d) return;
+
+    const v = elAmount.value.trim();
+    if (!v){
+      alert("Harcama tutarı gir.");
+      return;
+    }
+
+    const amount = clampInt(v, 0);
+    if (amount <= 0){
+      alert("Tutar 0'dan büyük olmalı.");
+      return;
+    }
+
+    if (!Array.isArray(d.entries)) d.entries = [];
+    d.entries.push({ id: uid(), ts: Date.now(), amount });
+
+    elAmount.value = "";
+    recalc();
+  }
+
+  function clearDay(){
+    if (!state.days.length) return;
+    const idx = Number(elDaySelect.value || 0);
+    if (!state.days[idx]) return;
+    state.days[idx].entries = [];
+    recalc();
+  }
+
+  async function resetMonth(){
+    const yyyyMM = elMonth.value || state.yyyyMM;
+    if (!yyyyMM) return;
+
+    const ok = confirm("Bu ayın tüm verileri silinecek. Emin misin?");
+    if (!ok) return;
+
+    await delKV(monthKey(yyyyMM));
+
+    // Aynı ay boş haline geç
+    if (state.yyyyMM === yyyyMM){
+      state = { yyyyMM, monthlyBudget: 0, dailyBase: 0, days: [] };
+      elBudget.value = "";
+      render();
+    }
+
+    dlg.close();
+  }
+
+  function exportJSON(){
+    if (!state.yyyyMM || !state.days.length){
+      alert("Yedek almak için önce ayı başlat veya kayıtlı ay yükle.");
+      return;
+    }
+
+    const data = JSON.stringify(state, null, 2);
+    const blob = new Blob([data], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `butce-${state.yyyyMM}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importJSON(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      try{
+        const text = await file.text();
+        const obj = JSON.parse(text);
+
+        if (!obj?.yyyyMM || !Array.isArray(obj.days)){
+          alert("Geçersiz dosya.");
+          return;
+        }
+
+        obj.days.forEach(d => { if (!Array.isArray(d.entries)) d.entries = []; });
+
+        state = obj;
+        elMonth.value = obj.yyyyMM;
+        elBudget.value = obj.monthlyBudget || 0;
+
+        // NEW: import edilen ay "bu ay" ise açınca bugüne git
+        if (state.days?.length && isCurrentMonth(state.yyyyMM)) forceTodayOnNextRender = true;
+
+        await saveCurrentMonthState();
+        recalc();
+        dlg.close();
+      } catch {
+        alert("İçe alma başarısız.");
+      }
+    };
+
+    input.click();
+  }
+
+  // ---------- Events ----------
+  elInit.addEventListener('click', () => initMonth());
+  elAdd.addEventListener('click', addEntry);
+  elClearDay.addEventListener('click', clearDay);
+  elApplyMonth.addEventListener('click', () => applyMonthSelection());
+
+  elAmount.addEventListener('keydown', (e) => {
+    if (e.key === "Enter") addEntry();
+  });
+
+  elDaySelect.addEventListener('change', () => {
+    updateSelectedDayUI();
+    render();
+  });
+
+  elExport.addEventListener('click', exportJSON);
+  elImport.addEventListener('click', importJSON);
+
+  btnSettings.addEventListener('click', () => dlg.showModal());
+  btnCloseDlg.addEventListener('click', () => dlg.close());
+  elReset.addEventListener('click', () => resetMonth());
+
+  // NEW: "açınca" (sekme/app tekrar görünür olunca) bu ay ise bugüne dön
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === "visible") requestSelectTodayIfCurrentMonth();
+  });
+  window.addEventListener('focus', () => requestSelectTodayIfCurrentMonth());
+
+  // ---------- Boot ----------
+  (async () => {
+    await requestPersistentStorage();
+
+    const lastMonth = await getLastMonth() || defaultMonth;
+    elMonth.value = lastMonth;
+
+    const existing = await loadMonthState(lastMonth);
+    if (existing){
+      state = existing;
+      elBudget.value = state.monthlyBudget || 0;
+
+      // NEW: app açınca bu ay ise bugüne git
+      if (state.days?.length && isCurrentMonth(state.yyyyMM)) forceTodayOnNextRender = true;
+
+      recalc(); // otomatik yükleme
+    } else {
+      state = { yyyyMM: lastMonth, monthlyBudget: 0, dailyBase: 0, days: [] };
+      elBudget.value = "";
+      render();
+    }
+  })();
+})();
+</script>
+</body>
+</html>
