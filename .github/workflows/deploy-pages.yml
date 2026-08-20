@@ -46,13 +46,22 @@ jobs:
       - name: Build production bundle
         run: pnpm build
 
+      - name: Verify Pages artifact
+        shell: bash
+        run: |
+          if grep -Eq '/src/main\.tsx|%BASE_URL%' ./dist/index.html; then
+            echo 'dist/index.html contains a source-only or unresolved URL.' >&2
+            exit 1
+          fi
+          grep -Eq '(src|href)="/budget00/assets/[^" ]+\.(js|css)"' ./dist/index.html
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: ./dist
 
   deploy:
     needs: build
