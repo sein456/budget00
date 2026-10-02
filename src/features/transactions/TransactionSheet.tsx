@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react'
 import { minorToInputValue, parseMoneyInputToMinor } from '../../domain/money'
 import type { AppSettings, BudgetAccountId, LocalDate, Transaction } from '../../domain/models'
 import type { TransactionDraft } from '../../app/useBudgetData'
@@ -38,6 +38,91 @@ export function TransactionSheet({
   const [note, setNote] = useState(transaction?.note ?? '')
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const sheetRef = useRef<HTMLElement>(null)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{ y: number; pointerId: number } | null>(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const dragCleanupRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => dragCleanupRef.current?.(), [])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    const syncViewport = () => {
+      if (!viewport || !backdropRef.current) return
+      backdropRef.current.style.top = `${viewport.offsetTop}px`
+      backdropRef.current.style.height = `${viewport.height}px`
+      backdropRef.current.style.setProperty('--sheet-viewport-height', `${viewport.height}px`)
+    }
+    syncViewport()
+    viewport?.addEventListener('resize', syncViewport)
+    viewport?.addEventListener('scroll', syncViewport)
+    return () => {
+      viewport?.removeEventListener('resize', syncViewport)
+      viewport?.removeEventListener('scroll', syncViewport)
+    }
+  }, [])
+
+  useEffect(() => {
+    const previousFocus = document.activeElement as HTMLElement | null
+    const content = document.querySelector<HTMLElement>('.app-content')
+    const navigation = document.querySelector<HTMLElement>('.bottom-navigation')
+    const wasContentInert = content?.inert ?? false
+    const wasNavigationInert = navigation?.inert ?? false
+    if (content) content.inert = true
+    if (navigation) navigation.inert = true
+    if (!window.matchMedia('(pointer: fine)').matches) sheetRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !saving) onClose()
+      if (event.key !== 'Tab') return
+      const controls = sheetRef.current?.querySelectorAll<HTMLElement>('input, select, textarea, button:not(:disabled), [tabindex="0"]')
+      if (!controls?.length) return
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === sheetRef.current)) {
+        event.preventDefault(); last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (content) content.inert = wasContentInert
+      if (navigation) navigation.inert = wasNavigationInert
+      previousFocus?.focus({ preventScroll: true })
+    }
+  }, [onClose, saving])
+
+  const startDrag = (event: PointerEvent<HTMLDivElement>) => {
+    if (saving || !event.isPrimary || event.button !== 0) return
+    event.preventDefault()
+    dragRef.current = { y: event.clientY, pointerId: event.pointerId }
+    setDragging(true)
+    dragCleanupRef.current?.()
+    const move = (event: globalThis.PointerEvent) => {
+      if (dragRef.current?.pointerId !== event.pointerId) return
+      if (event.cancelable) event.preventDefault()
+      setDragOffset(Math.max(0, event.clientY - dragRef.current.y))
+    }
+    const end = (event: globalThis.PointerEvent) => {
+      if (dragRef.current?.pointerId !== event.pointerId) return
+      const distance = event.clientY - dragRef.current.y
+      dragRef.current = null
+      setDragging(false)
+      setDragOffset(0)
+      dragCleanupRef.current?.()
+      if (event.type !== 'pointercancel' && !saving && distance >= 90) onClose()
+    }
+    window.addEventListener('pointermove', move, { passive: false })
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+    dragCleanupRef.current = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+    }
+  }
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -87,14 +172,26 @@ export function TransactionSheet({
   }
 
   return (
-    <div className="sheet-backdrop" onPointerDown={handleBackdrop}>
+    <div className="sheet-backdrop" ref={backdropRef} onPointerDown={handleBackdrop}>
       <section
-        className="transaction-sheet"
+        ref={sheetRef}
+        tabIndex={-1}
+        className={`transaction-sheet${dragging ? ' is-dragging' : ''}`}
+        style={{ transform: `translateY(${dragOffset}px)`, transition: dragging ? 'none' : 'transform 160ms ease-out' }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="transaction-sheet-title"
       >
-        <div className="sheet-handle" aria-hidden="true" />
+        <div className="sheet-drag-area" role="button" tabIndex={0}
+          aria-label="Pencereyi aşağı çekerek kapat; klavyede Enter ile kapat"
+          onPointerDown={startDrag}
+          onKeyDown={(event) => {
+            if (!saving && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault(); onClose()
+            }
+          }}>
+          <div className="sheet-handle" aria-hidden="true" />
+        </div>
         <header className="sheet-header">
           <div>
             <p className="eyebrow">{transaction ? 'İşlemi güncelle' : 'Yeni kayıt'}</p>
@@ -102,7 +199,7 @@ export function TransactionSheet({
               {transaction ? 'Harcamayı Düzenle' : 'Harcama Ekle'}
             </h2>
           </div>
-          <button className="sheet-close" type="button" aria-label="Kapat" onClick={onClose}>
+          <button className="sheet-close" type="button" aria-label="Kapat" disabled={saving} onClick={onClose}>
             <ActionIcon />
           </button>
         </header>
@@ -112,7 +209,7 @@ export function TransactionSheet({
             <span>Tutar</span>
             <div>
               <input
-                autoFocus
+                autoFocus={window.matchMedia('(pointer: fine)').matches}
                 aria-label="Tutar"
                 type="number"
                 min="0.01"
@@ -161,7 +258,7 @@ export function TransactionSheet({
           <label className="field-group">
             <span>Not <small>opsiyonel</small></span>
             <textarea
-              rows={3}
+              rows={2}
               maxLength={180}
               placeholder="Kısa bir açıklama ekle"
               value={note}
