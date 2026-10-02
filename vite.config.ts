@@ -54,8 +54,17 @@ export default defineConfig({
         skipWaiting: false,
         navigateFallback: '/budget00/index.html',
         navigateFallbackDenylist: [/^\/budget00\/deneme(?:\/|$)/],
-        globIgnores: ['deneme/**'],
+        globIgnores: ['deneme/**', 'ocr/**'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        runtimeCaching: [{
+          urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/budget00/ocr/v1/'),
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'dailycap-receipt-ocr-v1',
+            cacheableResponse: { statuses: [200] },
+            expiration: { maxEntries: 24, maxAgeSeconds: 31536000, purgeOnQuotaError: true },
+          },
+        }],
       },
     }),
   ],

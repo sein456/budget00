@@ -6,6 +6,7 @@ import './styles/polish.css'
 import './styles/fixes.css'
 import './styles/refinement.css'
 import './styles/features.css'
+import './styles/receipts.css'
 
 const rootElement = document.getElementById('root')
 

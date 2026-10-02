@@ -3,6 +3,7 @@ import { minorToInputValue, parseMoneyInputToMinor } from '../../domain/money'
 import type { AppSettings, BudgetAccountId, LocalDate, Transaction } from '../../domain/models'
 import type { TransactionDraft } from '../../app/useBudgetData'
 import { ActionIcon } from '../ActionIcon'
+import { CameraIcon, ReceiptScanner } from '../receipts/ReceiptScanner'
 
 interface TransactionSheetProps {
   readonly today: LocalDate
@@ -10,6 +11,7 @@ interface TransactionSheetProps {
   readonly settings: AppSettings
   readonly transaction?: Transaction
   readonly preset?: Transaction
+  readonly transactions?: readonly Transaction[]
   readonly onClose: () => void
   readonly onSave: (draft: TransactionDraft) => Promise<void>
   readonly onDelete: (transactionId: string) => Promise<void>
@@ -21,6 +23,7 @@ export function TransactionSheet({
   settings,
   transaction,
   preset,
+  transactions = [],
   onClose,
   onSave,
   onDelete,
@@ -39,6 +42,8 @@ export function TransactionSheet({
   )
   const [note, setNote] = useState(transaction?.note ?? preset?.note ?? '')
   const [saving, setSaving] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [scanning, setScanning] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const sheetRef = useRef<HTMLElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -77,7 +82,7 @@ export function TransactionSheet({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !saving) onClose()
       if (event.key !== 'Tab') return
-      const controls = sheetRef.current?.querySelectorAll<HTMLElement>('input, select, textarea, button:not(:disabled), [tabindex="0"]')
+      const controls = [...(sheetRef.current?.querySelectorAll<HTMLElement>('input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled), [tabindex="0"]') ?? [])].filter((element) => element.getClientRects().length && !element.closest('[hidden]'))
       if (!controls?.length) return
       const first = controls[0]
       const last = controls[controls.length - 1]
@@ -136,6 +141,7 @@ export function TransactionSheet({
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (scanning || saving) return
     const amountMinor = parseMoneyInputToMinor(amount)
 
     if (amountMinor === null || amountMinor <= 0) {
@@ -201,10 +207,22 @@ export function TransactionSheet({
               {transaction ? 'Harcamayı Düzenle' : 'Harcama Ekle'}
             </h2>
           </div>
-          <button className="sheet-close" type="button" aria-label="Kapat" disabled={saving} onClick={onClose}>
-            <ActionIcon />
-          </button>
+          <div className="sheet-header-actions">
+            <button className="sheet-camera" type="button" aria-label="Fiş tara" title="Fiş tara" aria-expanded={scannerOpen} disabled={saving} onClick={() => { if (!scannerOpen) { document.activeElement instanceof HTMLElement && document.activeElement.blur(); setScannerOpen(true) } }}><CameraIcon /></button>
+            <button className="sheet-close" type="button" aria-label="Kapat" disabled={saving} onClick={onClose}>
+              <ActionIcon />
+            </button>
+          </div>
         </header>
+
+        {scannerOpen && <ReceiptScanner today={today} categories={settings.categories} transactions={transactions.filter((item) => item.id !== transaction?.id)} accountId={budgetAccountId} onBusyChange={setScanning} onClose={() => { setScannerOpen(false); setScanning(false) }} onApply={(receipt) => {
+          setAmount(minorToInputValue(receipt.amountMinor))
+          if (receipt.localDate) setLocalDate(receipt.localDate)
+          if (receipt.category) setCategory(receipt.category)
+          if (receipt.merchant) setNote((current) => `${current ? `${current} · ` : ''}Fiş: ${receipt.merchant}`.slice(0, 180))
+          setFormError(null); setScannerOpen(false); setScanning(false)
+          sheetRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+        }} />}
 
         <form className="transaction-form" onSubmit={submit}>
           <label className="amount-field">
@@ -270,7 +288,7 @@ export function TransactionSheet({
 
           {formError && <p className="form-message error" role="alert">{formError}</p>}
 
-          <button className="primary-action" type="submit" disabled={saving}>
+          <button className="primary-action" type="submit" disabled={saving || scanning}>
             {saving ? 'Kaydediliyor…' : transaction ? 'Değişiklikleri Kaydet' : 'Harcamayı Kaydet'}
           </button>
 
@@ -278,7 +296,7 @@ export function TransactionSheet({
             <button
               className="delete-transaction"
               type="button"
-              disabled={saving}
+              disabled={saving || scanning}
               onClick={async () => {
                 setSaving(true)
                 try {

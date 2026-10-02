@@ -160,6 +160,7 @@ export function App() {
           settings={snapshot.settings}
           transaction={editor.transaction}
           preset={editor.preset}
+          transactions={snapshot.transactions}
           onClose={() => setEditor(null)}
           onSave={saveTransaction}
           onDelete={deleteTransaction}

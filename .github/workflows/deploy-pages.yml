@@ -69,6 +69,12 @@ jobs:
           grep -Eq '(src|href)="/budget00/deneme/assets/[^" ]+\.(js|css)"' ./dist/deneme/index.html
           test -f ./dist/deneme/manifest.webmanifest
           test -f ./dist/deneme/sw.js
+          test -f ./dist/ocr/v1/worker.min.js
+          test -f ./dist/ocr/v1/core/tesseract-core-lstm.wasm.js
+          test -f ./dist/ocr/v1/core/tesseract-core-simd-lstm.wasm.js
+          test -f ./dist/ocr/v1/core/tesseract-core-relaxedsimd-lstm.wasm.js
+          test -f ./dist/ocr/v1/lang/tur.traineddata.gz
+          test -f ./dist/ocr/v1/lang/eng.traineddata.gz
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

@@ -8,8 +8,9 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "node scripts/prepare-ocr.mjs && vite",
+    "build": "node scripts/prepare-ocr.mjs && tsc -b && vite build",
+    "prepare:ocr": "node scripts/prepare-ocr.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -18,9 +19,13 @@
     "dexie": "^4.4.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "tesseract.js": "7.0.0",
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
+    "@tesseract.js-data/tur": "^1.0.0",
+    "@types/node": "^24.19.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
