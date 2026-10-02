@@ -3,7 +3,8 @@ import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/budget00/',
+  base: '/budget00/deneme/',
+  build: { outDir: '../../dist/deneme', emptyOutDir: true },
   plugins: [
     react(),
     VitePWA({
@@ -17,12 +18,13 @@ export default defineConfig({
         'icons/icon-maskable-512.png',
       ],
       manifest: {
-        name: 'DailyCap',
-        short_name: 'DailyCap',
+        id: '/budget00/deneme/',
+        name: 'DailyCap Deneme',
+        short_name: 'DC Deneme',
         description: 'Kişisel ve Multinet bütçeni günlük hakla takip et.',
         lang: 'tr',
-        start_url: '/budget00/',
-        scope: '/budget00/',
+        start_url: '/budget00/deneme/',
+        scope: '/budget00/deneme/',
         display: 'standalone',
         orientation: 'portrait-primary',
         background_color: '#f6f7f5',
@@ -52,9 +54,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: false,
         skipWaiting: false,
-        navigateFallback: '/budget00/index.html',
-        navigateFallbackDenylist: [/^\/budget00\/deneme(?:\/|$)/],
-        globIgnores: ['deneme/**'],
+        navigateFallback: '/budget00/deneme/index.html',
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
       },
     }),

@@ -46,6 +46,14 @@ jobs:
       - name: Build production bundle
         run: pnpm build
 
+      - name: Test and typecheck separate phone demo
+        run: |
+          pnpm exec vitest run --config vite.config.ts --root experiments/mobile
+          pnpm exec tsc -b experiments/mobile/tsconfig.json
+
+      - name: Build separate phone demo
+        run: pnpm exec vite build experiments/mobile --config experiments/mobile/vite.config.ts
+
       - name: Verify Pages artifact
         shell: bash
         run: |
@@ -54,6 +62,13 @@ jobs:
             exit 1
           fi
           grep -Eq '(src|href)="/budget00/assets/[^" ]+\.(js|css)"' ./dist/index.html
+          if grep -Eq '/src/main\.tsx|%BASE_URL%' ./dist/deneme/index.html; then
+            echo 'Demo contains a source-only or unresolved URL.' >&2
+            exit 1
+          fi
+          grep -Eq '(src|href)="/budget00/deneme/assets/[^" ]+\.(js|css)"' ./dist/deneme/index.html
+          test -f ./dist/deneme/manifest.webmanifest
+          test -f ./dist/deneme/sw.js
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

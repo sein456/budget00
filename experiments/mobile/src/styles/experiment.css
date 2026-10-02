@@ -1,0 +1,43 @@
+.experiment-toolbar { margin: 1rem 1.25rem 0; padding: 0.85rem; border: 1px dashed var(--line); border-radius: 0.9rem; background: var(--surface); }
+.experiment-toolbar p { margin: 0 0 0.35rem; font-size: 0.65rem; color: var(--muted); }
+.experiment-toolbar strong { display: block; font-size: 0.9rem; }
+.experiment-toolbar small { font-weight: 400; color: var(--muted); }
+.experiment-toolbar > div { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem; }
+.experiment-toolbar button { min-height: 2.75rem; padding: 0.4rem 0.7rem; border: 1px solid var(--line); border-radius: 0.6rem; background: var(--surface-soft); font-size: 0.7rem; }
+.allowance-value { display: block; max-width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; overflow-wrap: anywhere; }
+.allowance-value small { display: block; margin-top: 0.5rem; font-size: 0.7rem; font-weight: 500; letter-spacing: 0; }
+.allowance-breakdown { margin: -0.35rem 0 1rem; padding: 0.8rem; border-radius: 0.75rem; background: rgba(0,0,0,0.12); font-size: 0.76rem; }
+.allowance-breakdown > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.75rem; padding: 0.25rem 0; }
+.allowance-breakdown dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.allowance-breakdown > div:last-child { margin-top: 0.35rem; padding-top: 0.6rem; border-top: 1px solid rgba(255,255,255,0.2); font-weight: 700; }
+.quick-repeat { margin: -0.25rem 0 1.25rem; }
+.quick-repeat h2 { margin: 0; font-size: 0.85rem; }
+.quick-repeat p { margin: 0.2rem 0 0.65rem; font-size: 0.7rem; color: var(--muted); }
+.quick-repeat > div { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0.5rem; }
+.quick-repeat button { display: grid; min-width: 0; gap: 0.25rem; padding: 0.65rem; border: 1px solid var(--line); border-radius: 0.75rem; background: var(--surface); text-align: left; overflow-wrap: anywhere; }
+.quick-repeat button span { font-size: 0.7rem; }
+.quick-repeat button b { font-size: 0.8rem; }
+.quick-repeat button small { font-size: 0.63rem; color: var(--muted); }
+.sort-hint { margin: 0 0 0.65rem; font-size: 0.7rem; color: var(--muted); }
+.category-chip { padding-left: 0.25rem; }
+.category-chip .category-grip { width: 1.75rem; height: 2.75rem; min-height: 2.75rem; flex: 0 0 1.75rem; touch-action: none; cursor: grab; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
+.category-chip.moving { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent); }
+.forecast-caveat { margin: 0.7rem 0 0; padding: 0.65rem; border-radius: 0.6rem; background: var(--surface-soft); color: var(--muted); font-size: 0.74rem; }
+.distribution-card { min-width: 0; padding: 1.15rem; border-radius: 1.2rem; background: var(--surface); margin-top: 1rem; }
+.distribution-card h2 { margin: 0; font-size: 1.05rem; }
+.distribution-caption { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.73rem; overflow-wrap: anywhere; }
+.donut-wrap { position: relative; width: min(100%, 260px); margin: 0.5rem auto; }
+.donut-wrap svg { display: block; width: 100%; height: auto; }
+.donut-center { position: absolute; inset: 29% 23%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.25rem; text-align: center; container-type: inline-size; pointer-events: none; }
+.donut-center span { color: var(--muted); font-size: 0.67rem; overflow-wrap: anywhere; }
+.donut-center strong { max-width: 100%; font-size: clamp(0.75rem,12cqi,1.25rem); overflow-wrap: anywhere; }
+.donut-center small { color: var(--muted); font-size: 0.68rem; }
+.distribution-legend { display: grid; gap: 0.35rem; }
+.distribution-legend button { display: grid; grid-template-columns: 0.65rem minmax(0,1fr) auto; align-items: center; gap: 0.65rem; min-height: 2.75rem; padding: 0.5rem 0.6rem; border: 1px solid transparent; border-radius: 0.65rem; background: transparent; text-align: left; font-size: 0.8rem; }
+.distribution-legend button[aria-pressed='true'] { background: var(--surface-soft); border-color: var(--line); }
+.distribution-legend i { width: 0.65rem; height: 0.65rem; border-radius: 50%; }
+.distribution-legend span { overflow-wrap: anywhere; }
+.distribution-legend b { font-variant-numeric: tabular-nums; }
+.distribution-details { margin-top: 0.75rem; border-top: 1px solid var(--line); }
+.distribution-details summary { min-height: 2.75rem; padding: 0.75rem 0; cursor: pointer; font-size: 0.75rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .transaction-sheet { transition: none !important; } }

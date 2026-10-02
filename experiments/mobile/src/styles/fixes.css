@@ -1,0 +1,29 @@
+.toast-success,
+.toast-error {
+  pointer-events: none;
+}
+
+.settings-card,
+.settings-form .field-group,
+.transaction-form .field-group,
+.amount-field {
+  scroll-margin-top: 1rem;
+  scroll-margin-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+
+.theme-options label {
+  display: grid;
+  min-height: 2.75rem;
+  place-items: center;
+  cursor: pointer;
+}
+
+.transaction-form {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+@supports (height: 100dvh) {
+  .sheet-backdrop {
+    height: 100dvh;
+  }
+}
