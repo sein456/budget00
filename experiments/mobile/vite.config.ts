@@ -52,7 +52,7 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        clientsClaim: false,
+        clientsClaim: true,
         skipWaiting: false,
         navigateFallback: '/budget00/deneme/index.html',
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],

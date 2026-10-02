@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { calculateMonthlyBudget, getBudgetBalanceForDate } from '../../domain/dailyBudgetCalculator'
 import { formatFullDate } from '../../domain/displayDate'
 import { formatMoney } from '../../domain/money'
@@ -8,6 +9,7 @@ interface TodayScreenProps {
   readonly plans: readonly MonthlyPlan[]
   readonly transactions: readonly Transaction[]
   readonly onAddTransaction: () => void
+  readonly onRepeatTransaction: (transaction: Transaction) => void
 }
 
 function findPlan(plans: readonly MonthlyPlan[], accountId: MonthlyPlan['budgetAccountId']) {
@@ -25,7 +27,13 @@ export function TodayScreen({
   plans,
   transactions,
   onAddTransaction,
+  onRepeatTransaction,
 }: TodayScreenProps) {
+  const [showBreakdown, setShowBreakdown] = useState(false)
+  const recent = [...transactions].filter(item => item.localDate <= today)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .filter((item, index, all) => all.findIndex(other => other.budgetAccountId === item.budgetAccountId && other.category === item.category && other.amountMinor === item.amountMinor && other.note === item.note) === index)
+    .slice(0, 3)
   const personalPlan = findPlan(plans, 'personal')
   const multinetPlan = findPlan(plans, 'multinet')
   const personalLedger = calculateMonthlyBudget(personalPlan, transactions)
@@ -61,8 +69,17 @@ export function TodayScreen({
         </div>
         <p id="available-heading">Bugün harcayabilirsin</p>
         <strong className={personalToday.closingBalanceMinor < 0 ? 'money-negative' : ''}>
-          {formatMoney(personalToday.closingBalanceMinor)}
+          <button type="button" className="allowance-value" aria-expanded={showBreakdown} aria-controls="allowance-breakdown" onClick={() => setShowBreakdown(current => !current)}>
+            {formatMoney(personalToday.closingBalanceMinor)}
+            <small>{showBreakdown ? 'Hesabı gizle ↑' : 'Nasıl hesaplandı? ↓'}</small>
+          </button>
         </strong>
+        {showBreakdown && <dl className="allowance-breakdown" id="allowance-breakdown">
+          <div><dt>Bugünkü pay</dt><dd>{formatMoney(personalToday.baseEntitlementMinor)}</dd></div>
+          <div><dt>Dünden devir</dt><dd>{formatMoney(personalToday.carryInMinor, {signed:true})}</dd></div>
+          <div><dt>Bugün harcanan</dt><dd>{formatMoney(-personalToday.spentMinor)}</dd></div>
+          <div><dt>Kalan hak</dt><dd>{formatMoney(personalToday.closingBalanceMinor)}</dd></div>
+        </dl>}
         <div className="hero-meta">
           <span>Bugün harcanan</span>
           <b>{formatMoney(personalToday.spentMinor)}</b>
@@ -80,6 +97,14 @@ export function TodayScreen({
         <span aria-hidden="true">＋</span>
         Harcama Ekle
       </button>
+
+      {recent.length > 0 && <section className="quick-repeat" aria-label="Hızlı harcama tekrarı">
+        <h2>Hızlı tekrar</h2><p>Son harcamandan doldur; kaydetmeden eklenmez.</p>
+        <div>{recent.map(item => <button type="button" key={item.id} onClick={() => onRepeatTransaction(item)}>
+          <span>{item.category || 'Diğer'}</span><b>{formatMoney(item.amountMinor)}</b>
+          <small>{item.budgetAccountId === 'personal' ? 'Kişisel' : 'Multinet'} · Tekrarla</small>
+        </button>)}</div>
+      </section>}
 
       <section className="metric-grid" aria-label="Aylık bütçe özeti">
         <article className="metric-card">

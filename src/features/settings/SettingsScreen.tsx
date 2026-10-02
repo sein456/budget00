@@ -5,6 +5,7 @@ import { formatMonth } from '../../domain/displayDate'
 import { minorToInputValue, parseMoneyInputToMinor } from '../../domain/money'
 import type { AppSettings, LocalMonth, MonthlyPlan, ThemePreference } from '../../domain/models'
 import { ActionIcon } from '../ActionIcon'
+import { CategorySorter } from './CategorySorter'
 
 interface SettingsScreenProps {
   readonly currentMonth: LocalMonth
@@ -222,23 +223,7 @@ export function SettingsScreen({
               <p>Harcama eklerken kullanılır</p>
             </div>
           </div>
-          <div className="category-list">
-            {categories.map((category) => (
-              <span className="category-chip" key={category} title={category}>
-                <span>{category}</span>
-                <button
-                  type="button"
-                  aria-label={`${category} kategorisini kaldır`}
-                  onClick={() => {
-                    setCategories((current) => current.filter((item) => item !== category))
-                    setSaved(false)
-                  }}
-                >
-                  <ActionIcon />
-                </button>
-              </span>
-            ))}
-          </div>
+          <CategorySorter categories={categories} onChange={(next) => { setCategories(next); setSaved(false) }} />
           <div className="add-category-row">
             <input
               type="text"

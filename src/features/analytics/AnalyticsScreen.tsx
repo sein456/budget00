@@ -3,6 +3,7 @@ import { formatHistoryDate, formatMonth } from '../../domain/displayDate'
 import { getLocalMonth } from '../../domain/dateUtils'
 import { formatMoney } from '../../domain/money'
 import { calculateMonthlyAnalytics } from '../../domain/monthlyAnalytics'
+import { CategoryDistribution } from './CategoryDistribution'
 import type {
   BudgetAccountId,
   LocalDate,
@@ -136,11 +137,14 @@ export function AnalyticsScreen({ today, plans, transactions }: AnalyticsScreenP
           <span>Ay sonu tahmini</span>
           <small>Yalnızca geçen günlerin harcama hızına göre</small>
         </div>
-        <strong>{formatMoney(analytics.projectedMonthEndSpendingMinor)}</strong>
-        <div className="projection-balance">
+        {selectedMonth === currentMonth && analytics.elapsedDayCount < 7 && <p className="forecast-caveat">
+          Ön tahmin · {analytics.elapsedDayCount} günlük veri. İlk hafta, tek seferlik harcamalar tahmini çok değiştirebilir.
+        </p>}
+        <strong>{analytics.totalSpentMinor > 0 ? formatMoney(analytics.projectedMonthEndSpendingMinor) : 'Henüz tahmin yok'}</strong>
+        {analytics.totalSpentMinor > 0 && <div className="projection-balance">
           <span>{projectionIsHealthy ? 'Tahmini bütçe fazlası' : 'Tahmini bütçe aşımı'}</span>
           <b>{formatMoney(Math.abs(analytics.projectedMonthEndBalanceMinor))}</b>
-        </div>
+        </div>}
       </section>
 
       <section className="highest-day-card">
@@ -157,38 +161,8 @@ export function AnalyticsScreen({ today, plans, transactions }: AnalyticsScreenP
         </b>
       </section>
 
-      <section className="category-analysis" aria-labelledby="category-analysis-heading">
-        <div className="section-title-row">
-          <div>
-            <p className="eyebrow">Dağılım</p>
-            <h2 id="category-analysis-heading">Kategoriler</h2>
-          </div>
-          <span>{analytics.categorySpending.length} kategori</span>
-        </div>
-
-        {analytics.categorySpending.length === 0 ? (
-          <div className="empty-state polished">
-            <span aria-hidden="true">○</span>
-            <strong>Henüz kategori verisi yok</strong>
-            <p>Bu ay harcama eklediğinde dağılım burada görünecek.</p>
-          </div>
-        ) : (
-          <div className="category-bars">
-            {analytics.categorySpending.map((item) => (
-              <div className="category-bar-row" key={item.category}>
-                <div className="category-bar-label">
-                  <span title={item.category}>{item.category}</span>
-                  <b>{formatMoney(item.amountMinor)}</b>
-                </div>
-                <div className="category-track" aria-hidden="true">
-                  <span style={{ width: `${Math.max(item.sharePercent, 2)}%` }} />
-                </div>
-                <small>%{formatPercent(item.sharePercent)}</small>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <CategoryDistribution key={`${selectedMonth}-${accountId}`} rows={analytics.categorySpending}
+        monthLabel={formatMonth(selectedMonth)} accountLabel={accountId === 'personal' ? 'Kişisel' : 'Multinet'} />
     </div>
   )
 }

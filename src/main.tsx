@@ -5,6 +5,7 @@ import './styles/global.css'
 import './styles/polish.css'
 import './styles/fixes.css'
 import './styles/refinement.css'
+import './styles/features.css'
 
 const rootElement = document.getElementById('root')
 

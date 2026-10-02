@@ -20,6 +20,7 @@ import './App.css'
 interface EditorState {
   readonly defaultDate: LocalDate
   readonly transaction?: Transaction
+  readonly preset?: Transaction
 }
 
 function findOrCreatePlan(
@@ -100,6 +101,7 @@ export function App() {
             plans={currentPlans}
             transactions={snapshot.transactions}
             onAddTransaction={() => setEditor({ defaultDate: today })}
+            onRepeatTransaction={(preset) => setEditor({ defaultDate: today, preset })}
           />
         )}
         {activeTab === 'history' && (
@@ -157,6 +159,7 @@ export function App() {
           defaultDate={editor.defaultDate}
           settings={snapshot.settings}
           transaction={editor.transaction}
+          preset={editor.preset}
           onClose={() => setEditor(null)}
           onSave={saveTransaction}
           onDelete={deleteTransaction}

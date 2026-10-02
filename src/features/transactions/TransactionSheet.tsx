@@ -9,6 +9,7 @@ interface TransactionSheetProps {
   readonly defaultDate: LocalDate
   readonly settings: AppSettings
   readonly transaction?: Transaction
+  readonly preset?: Transaction
   readonly onClose: () => void
   readonly onSave: (draft: TransactionDraft) => Promise<void>
   readonly onDelete: (transactionId: string) => Promise<void>
@@ -19,23 +20,24 @@ export function TransactionSheet({
   defaultDate,
   settings,
   transaction,
+  preset,
   onClose,
   onSave,
   onDelete,
 }: TransactionSheetProps) {
   const [amount, setAmount] = useState(
-    transaction ? minorToInputValue(transaction.amountMinor) : '',
+    transaction || preset ? minorToInputValue((transaction ?? preset)!.amountMinor) : '',
   )
   const [localDate, setLocalDate] = useState<LocalDate>(
     transaction?.localDate ?? defaultDate,
   )
   const [budgetAccountId, setBudgetAccountId] = useState<BudgetAccountId>(
-    transaction?.budgetAccountId ?? 'personal',
+    transaction?.budgetAccountId ?? preset?.budgetAccountId ?? 'personal',
   )
   const [category, setCategory] = useState(
-    transaction?.category || settings.categories[0] || 'Diğer',
+    transaction?.category || (preset?.category && settings.categories.includes(preset.category) ? preset.category : '') || settings.categories[0] || 'Diğer',
   )
-  const [note, setNote] = useState(transaction?.note ?? '')
+  const [note, setNote] = useState(transaction?.note ?? preset?.note ?? '')
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const sheetRef = useRef<HTMLElement>(null)
