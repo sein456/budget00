@@ -1,5 +1,6 @@
 /* Responsive layout fixes and a quieter visual hierarchy. */
 :root {
+  --app-safe-top: env(safe-area-inset-top, 0px);
   --faint: #738179;
   --shadow: 0 6px 24px rgba(30, 45, 39, 0.045);
   line-height: 1.5;
@@ -12,6 +13,18 @@ html, body { min-width: 0; }
 .app-root {
   max-width: 480px;
   overflow: visible;
+  padding-top: var(--app-safe-top);
+}
+
+/* Keep scrolling content below the translucent iOS status bar. */
+.app-root::before {
+  content: '';
+  position: fixed;
+  z-index: 40;
+  inset: 0 0 auto;
+  height: var(--app-safe-top);
+  background: var(--page);
+  pointer-events: none;
 }
 
 .app-content {
@@ -138,6 +151,8 @@ html, body { min-width: 0; }
 .toast-success, .toast-error { bottom: calc(5rem + env(safe-area-inset-bottom)); }
 
 .transaction-sheet { width: min(100%, 480px); padding-right: 1.25rem; padding-left: 1.25rem; }
+.sheet-backdrop { padding-top: calc(var(--app-safe-top) + 0.75rem); }
+.transaction-sheet { max-height: min(92dvh, 48rem, calc(100dvh - var(--app-safe-top) - 0.75rem)); }
 .sheet-header > div { min-width: 0; }
 .sheet-close { flex: 0 0 2.75rem; }
 .transaction-form .amount-field input { font-size: 2.3rem; }
