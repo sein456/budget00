@@ -2,31 +2,59 @@ export interface ReceiptProgress { readonly percent: number; readonly message: s
 
 const cancelled = () => new DOMException('Fiş okuma iptal edildi.', 'AbortError')
 
+async function decodeImage(file: File, signal: AbortSignal): Promise<ImageBitmap | HTMLImageElement> {
+  // Decode the local bytes without a blob: URL request. This also avoids WebKit's
+  // offline-navigation handling of blob URLs and respects camera EXIF orientation.
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
+      if (signal.aborted) { bitmap.close(); throw cancelled() }
+      return bitmap
+    } catch (error) {
+      if (signal.aborted) throw error
+      // Some Safari-supported camera formats only decode through an <img>.
+    }
+  }
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    const abort = () => { reader.abort(); reject(cancelled()) }
+    const finish = () => signal.removeEventListener('abort', abort)
+    reader.onload = () => { finish(); resolve(String(reader.result)) }
+    reader.onerror = () => { finish(); reject(new Error('Fotoğraf açılamadı. JPEG/PNG kullan veya kamerayla tekrar çek.')) }
+    signal.addEventListener('abort', abort, { once: true })
+    if (signal.aborted) abort()
+    else reader.readAsDataURL(file)
+  })
+  const image = new Image()
+  await new Promise<void>((resolve, reject) => {
+    const abort = () => { image.src = ''; reject(cancelled()) }
+    const finish = (error?: Error) => {
+      signal.removeEventListener('abort', abort)
+      image.onload = null; image.onerror = null
+      error ? reject(error) : resolve()
+    }
+    signal.addEventListener('abort', abort, { once: true })
+    image.onload = () => finish()
+    image.onerror = () => finish(new Error('Fotoğraf açılamadı. JPEG/PNG kullan veya kamerayla tekrar çek.'))
+    if (signal.aborted) abort()
+    else image.src = dataUrl
+  })
+  return image
+}
+
 async function prepareImage(file: File, signal: AbortSignal): Promise<Uint8Array> {
   if (!file.size || file.size > 20 * 1024 * 1024) throw new Error('Fotoğraf 20 MB’den küçük olmalı.')
   if (file.type && !file.type.startsWith('image/')) throw new Error('Bir fiş fotoğrafı seç; PDF bu ekranda desteklenmiyor.')
-  const url = URL.createObjectURL(file)
-  const image = new Image()
+  const image = await decodeImage(file, signal)
   const canvas = document.createElement('canvas')
   try {
-    await new Promise<void>((resolve, reject) => {
-      const abort = () => { image.src = ''; reject(cancelled()) }
-      signal.addEventListener('abort', abort, { once: true })
-      const finish = (error?: Error) => {
-        signal.removeEventListener('abort', abort)
-        image.onload = null; image.onerror = null
-        error ? reject(error) : resolve()
-      }
-      image.onload = () => finish()
-      image.onerror = () => finish(new Error('Fotoğraf açılamadı. JPEG/PNG kullan veya kamerayla tekrar çek.'))
-      if (signal.aborted) abort()
-      else image.src = url
-    })
     if (signal.aborted) throw cancelled()
-    if (Math.min(image.naturalWidth, image.naturalHeight) < 100) throw new Error('Fotoğraf çok küçük. Fişi daha yakından ve net çek.')
-    const scale = Math.min(1, 2200 / Math.max(image.naturalWidth, image.naturalHeight), Math.sqrt(4_000_000 / (image.naturalWidth * image.naturalHeight)))
-    canvas.width = Math.round(image.naturalWidth * scale)
-    canvas.height = Math.round(image.naturalHeight * scale)
+    const width = image instanceof HTMLImageElement ? image.naturalWidth : image.width
+    const height = image instanceof HTMLImageElement ? image.naturalHeight : image.height
+    if (Math.min(width, height) < 100) throw new Error('Fotoğraf çok küçük. Fişi daha yakından ve net çek.')
+    const scale = Math.min(1, 2200 / Math.max(width, height), Math.sqrt(4_000_000 / (width * height)))
+    canvas.width = Math.round(width * scale)
+    canvas.height = Math.round(height * scale)
     const context = canvas.getContext('2d', { willReadFrequently: true })
     if (!context) throw new Error('Bu cihazda fotoğraf hazırlanamadı.')
     context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height)
@@ -41,8 +69,8 @@ async function prepareImage(file: File, signal: AbortSignal): Promise<Uint8Array
     if (signal.aborted) throw cancelled()
     return new Uint8Array(await blob.arrayBuffer())
   } finally {
-    URL.revokeObjectURL(url)
-    image.src = ''
+    if (image instanceof HTMLImageElement) image.src = ''
+    else image.close()
     canvas.width = canvas.height = 0
   }
 }

@@ -88,6 +88,6 @@ export function ReceiptScanner({ today, categories, transactions, accountId, onA
       <button type="button" className="primary-action" disabled={chosen === null} onClick={() => chosen !== null && onApply({ ...result, amountMinor: chosen })}>Bilgileri kullan</button>
       {chosen === null && <p className="receipt-help">Tutar seçilmedi. Üstteki seçenekten seç veya “Vazgeç” ile elle gir.</p>}
     </div>}
-    <p className="receipt-privacy">Fotoğraf cihazında okunur; sunucuya gönderilmez ve saklanmaz. İlk tarama internet ister; okuma dosyaları önbellekte kaldıkça çevrimdışı da çalışır.</p>
+    <p className="receipt-privacy">Fotoğraf cihazında okunur; sunucuya gönderilmez ve saklanmaz. İlk kullanım internet ister; okuma dosyaları cihazda önbelleğe alınır.</p>
   </section>
 }

@@ -60,3 +60,10 @@ These are browser emulations and synthetic fixtures, not physical-iPhone or
 real-world receipt accuracy claims. Physical phone/camera capture still needs a
 user smoke test after deployment. Updating the main PWA must preserve its existing
 `budget00` database and normal date; do not substitute the separate demo database.
+
+Verification note: real OCR, cancellation, confirmation, ambiguity and layout
+checks passed in both Chromium and Windows WebKit. Chromium also passed production
+offline reload and repeat OCR. Windows WebKit's forced-offline mode failed local
+blob/data image decoding and its network-route blocking prevented offline reload;
+do not report those as passed Safari offline checks. A physical iPhone offline
+smoke test remains necessary. The first scan should be performed online.
