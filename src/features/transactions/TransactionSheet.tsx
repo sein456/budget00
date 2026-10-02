@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type PointerEvent } from 'react'
 import { minorToInputValue, parseMoneyInputToMinor } from '../../domain/money'
 import type { AppSettings, BudgetAccountId, LocalDate, Transaction } from '../../domain/models'
 import type { TransactionDraft } from '../../app/useBudgetData'
+import { ActionIcon } from '../ActionIcon'
 
 interface TransactionSheetProps {
   readonly today: LocalDate
@@ -102,7 +103,7 @@ export function TransactionSheet({
             </h2>
           </div>
           <button className="sheet-close" type="button" aria-label="Kapat" onClick={onClose}>
-            ×
+            <ActionIcon />
           </button>
         </header>
 
@@ -112,6 +113,7 @@ export function TransactionSheet({
             <div>
               <input
                 autoFocus
+                aria-label="Tutar"
                 type="number"
                 min="0.01"
                 step="0.01"
@@ -120,7 +122,7 @@ export function TransactionSheet({
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
               />
-              <b>₺</b>
+              <b aria-hidden="true">₺</b>
             </div>
           </label>
 

@@ -3,6 +3,7 @@ import { calculateMonthlyBudget } from '../../domain/dailyBudgetCalculator'
 import { formatHistoryDate, formatMonth } from '../../domain/displayDate'
 import { getDayOfLocalMonth, getLocalMonth } from '../../domain/dateUtils'
 import { formatMoney } from '../../domain/money'
+import { ActionIcon } from '../ActionIcon'
 import type {
   BudgetAccountId,
   LocalDate,
@@ -141,6 +142,7 @@ export function HistoryScreen({
                 <div className="day-date">
                   <strong>{formatHistoryDate(day.localDate)}</strong>
                   <span>{dayTransactions.length} işlem</span>
+                  {isOver && <span className="over-budget-badge">Limit aşıldı</span>}
                 </div>
                 <div className="day-amounts">
                   <strong>{formatMoney(day.spentMinor)}</strong>
@@ -148,7 +150,6 @@ export function HistoryScreen({
                     Gün sonu {formatMoney(day.closingBalanceMinor)}
                   </span>
                 </div>
-                {isOver && <span className="over-budget-badge">Aşım</span>}
               </button>
 
               {isExpanded && (
@@ -193,7 +194,7 @@ export function HistoryScreen({
                             aria-label="İşlemi sil"
                             onClick={() => onDeleteTransaction(transaction)}
                           >
-                            ×
+                            <ActionIcon kind="delete" />
                           </button>
                         </div>
                       ))

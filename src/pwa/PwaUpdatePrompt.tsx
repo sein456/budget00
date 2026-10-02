@@ -16,8 +16,20 @@ export function PwaUpdatePrompt({ canUpdate }: PwaUpdatePromptProps) {
     useState<UpdateServiceWorker | null>(null)
 
   useEffect(() => {
+    let registration: ServiceWorkerRegistration | undefined
+    const checkForUpdate = () => {
+      if (navigator.onLine && document.visibilityState === 'visible') {
+        void registration?.update().catch(() => {
+          // Keep the offline version usable; retry on the next foreground event.
+        })
+      }
+    }
     const updateSW = registerSW({
       immediate: true,
+      onRegisteredSW: (_url, registered) => {
+        registration = registered
+        checkForUpdate()
+      },
       onNeedRefresh: () => setNeedRefresh(true),
       onOfflineReady: () => {
         setOfflineReady(true)
@@ -29,6 +41,14 @@ export function PwaUpdatePrompt({ canUpdate }: PwaUpdatePromptProps) {
     })
 
     setUpdateServiceWorker(() => updateSW)
+    document.addEventListener('visibilitychange', checkForUpdate)
+    window.addEventListener('online', checkForUpdate)
+    window.addEventListener('focus', checkForUpdate)
+    return () => {
+      document.removeEventListener('visibilitychange', checkForUpdate)
+      window.removeEventListener('online', checkForUpdate)
+      window.removeEventListener('focus', checkForUpdate)
+    }
   }, [])
 
   if (needRefresh && canUpdate) {

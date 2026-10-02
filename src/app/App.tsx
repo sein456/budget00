@@ -144,7 +144,10 @@ export function App() {
         </div>
       )}
 
-      <BottomNavigation activeTab={activeTab} onChange={setActiveTab} />
+      <BottomNavigation activeTab={activeTab} onChange={(tab) => {
+        setActiveTab(tab)
+        window.scrollTo({ top: 0, behavior: 'instant' })
+      }} />
       <PwaUpdatePrompt canUpdate={editor === null} />
 
       {editor && (

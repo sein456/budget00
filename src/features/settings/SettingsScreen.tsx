@@ -4,6 +4,7 @@ import { parseBudgetBackup } from '../../db/backup'
 import { formatMonth } from '../../domain/displayDate'
 import { minorToInputValue, parseMoneyInputToMinor } from '../../domain/money'
 import type { AppSettings, LocalMonth, MonthlyPlan, ThemePreference } from '../../domain/models'
+import { ActionIcon } from '../ActionIcon'
 
 interface SettingsScreenProps {
   readonly currentMonth: LocalMonth
@@ -233,7 +234,7 @@ export function SettingsScreen({
                     setSaved(false)
                   }}
                 >
-                  ×
+                  <ActionIcon />
                 </button>
               </span>
             ))}
@@ -262,7 +263,7 @@ export function SettingsScreen({
             <span className="settings-icon">◐</span>
             <div>
               <h2>Görünüm</h2>
-              <p>Light ve dark mode tercihi</p>
+              <p>Sana uygun temayı seç</p>
             </div>
           </div>
           <div className="theme-options" role="radiogroup" aria-label="Tema tercihi">
@@ -291,7 +292,7 @@ export function SettingsScreen({
         <section className="settings-card currency-card">
           <div>
             <span>Para birimi</span>
-            <small>Tüm hesaplamalar tam sayı kuruşla yapılır</small>
+            <small>Türk lirası</small>
           </div>
           <strong>{settings.currency}</strong>
         </section>
@@ -315,7 +316,7 @@ export function SettingsScreen({
         <div className="data-actions">
           <button type="button" disabled={dataBusy} onClick={() => void exportData()}>
             <span aria-hidden="true">↓</span>
-            <div><b>JSON olarak dışa aktar</b><small>İndirilebilir yedek oluştur</small></div>
+            <div><b>Yedeği indir</b><small>Verilerini bir dosyada sakla</small></div>
           </button>
           <button
             type="button"
@@ -323,7 +324,7 @@ export function SettingsScreen({
             onClick={() => importInputRef.current?.click()}
           >
             <span aria-hidden="true">↑</span>
-            <div><b>JSON yedeğini içe aktar</b><small>Mevcut verilerin yerine yükle</small></div>
+            <div><b>Yedeği geri yükle</b><small>Kayıtlı bir yedek dosyası seç</small></div>
           </button>
           <button
             className="danger"
@@ -331,7 +332,7 @@ export function SettingsScreen({
             disabled={dataBusy}
             onClick={() => void resetData()}
           >
-            <span aria-hidden="true">×</span>
+            <span aria-hidden="true"><ActionIcon kind="delete" /></span>
             <div><b>Tüm verileri sıfırla</b><small>Bu işlem geri alınamaz</small></div>
           </button>
         </div>

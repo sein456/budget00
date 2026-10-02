@@ -4,6 +4,7 @@ import { App } from './app/App'
 import './styles/global.css'
 import './styles/polish.css'
 import './styles/fixes.css'
+import './styles/refinement.css'
 
 const rootElement = document.getElementById('root')
 
