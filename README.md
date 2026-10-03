@@ -19,13 +19,17 @@ pnpm typecheck
 pnpm build
 ```
 
-Production çıktısı `dist/` dizinine oluşturulur. Vite, manifest ve tüm PWA adresleri GitHub Pages için `/budget00/` taban yolunu kullanır.
+Production çıktısı `dist/` dizinine oluşturulur. `VERCEL=1` olduğunda Vite, manifest, service worker ve OCR adresleri `/` taban yolunu kullanır. Diğer ortamlarda GitHub Pages uyumluluğu için `/budget00/` korunur. HTML ikon adresleri de aynı Vite taban yolundan oluşturulur.
 
 ## Deployment
 
 `.github/workflows/deploy-pages.yml`, `main` dalına yapılan push sonrasında bağımlılık kurulumunu, testleri, strict TypeScript kontrolünü ve production build'i çalıştırır. Başarılı çıktı GitHub Pages'a yayınlanır.
 
 Beklenen adres: `https://sein456.github.io/budget00/`
+
+Vercel'de framework Vite, build komutu `pnpm build` ve output dizini `dist` olmalıdır. Vercel'in otomatik sistem ortam değişkenleri açıkken `VERCEL=1` build sırasında sağlanır; GitHub Pages workflow'u bu değişkeni ayarlamaz ve mevcut `/budget00/` adresinde yayın yapmaya devam eder. Ayrı telefon denemesinin GitHub Pages yapılandırması değişmez.
+
+GitHub Pages ve Vercel farklı site adresleri olduğu için cihazdaki yerel kayıtlar otomatik taşınmaz. Taşımak için mevcut uygulamada Ayarlar'dan JSON yedeği dışa aktar, yeni adreste içe aktar.
 
 ## iPhone'a kurulum
 

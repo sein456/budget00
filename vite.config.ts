@@ -1,12 +1,16 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
+import { getDeploymentPaths } from './src/config/deployment.ts'
+
+const deployment = getDeploymentPaths(process.env.VERCEL)
 
 export default defineConfig({
-  base: '/budget00/',
+  base: deployment.base,
   plugins: [
     react(),
     VitePWA({
+      scope: deployment.base,
       registerType: 'prompt',
       injectRegister: false,
       includeAssets: [
@@ -21,8 +25,8 @@ export default defineConfig({
         short_name: 'DailyCap',
         description: 'Kişisel ve Multinet bütçeni günlük hakla takip et.',
         lang: 'tr',
-        start_url: '/budget00/',
-        scope: '/budget00/',
+        start_url: deployment.base,
+        scope: deployment.base,
         display: 'standalone',
         orientation: 'portrait-primary',
         background_color: '#f6f7f5',
@@ -52,12 +56,12 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: false,
         skipWaiting: false,
-        navigateFallback: '/budget00/index.html',
-        navigateFallbackDenylist: [/^\/budget00\/deneme(?:\/|$)/],
+        navigateFallback: deployment.navigateFallback,
+        navigateFallbackDenylist: deployment.navigateFallbackDenylist,
         globIgnores: ['deneme/**', 'ocr/**'],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
         runtimeCaching: [{
-          urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/budget00/ocr/v1/'),
+          urlPattern: deployment.ocrRuntimePattern,
           handler: 'CacheFirst',
           options: {
             cacheName: 'dailycap-receipt-ocr-v1',
